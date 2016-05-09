@@ -1,23 +1,40 @@
 #include <fstream>
 #include <cstdio>
 #include <iostream>
+#include <chrono>
+
 #include "writebitmap.h"
 
 void main(void* arg, void** args)
 {
     Color col;
+   
+    const int BitmapWidth = 512;
+    const int BitmapHeight = 512;
+ 
+    Bitmap* pBitmap = CreateBitmap(BitmapWidth, BitmapHeight);
+
     col.blue = 255;
     col.green = 255;
     col.red = 255;
-
-    ClearBitmap(col);
+    ClearBitmap(pBitmap, col);
 
     col.red = 0;
     col.green = 0;
     col.blue = 255;
-    DrawLine(0, 0, 50, 50, col);
+    DrawLine(pBitmap, 0, 0, 256, 256, col);
 
-    WriteBitmap("maze.bmp");
+    col.red = 255;
+    PutPixel(pBitmap, 300, 300, col);
+
+    col.green = 255;
+    col.red = 0;
+
+    DrawCircle(pBitmap, 400, 400, 80, col);
+
+    WriteBitmap(pBitmap, "maze.bmp");
+
+    DestroyBitmap(pBitmap);
 
     system("pause");
 }

@@ -1,35 +1,103 @@
 #pragma once
 
-#define WIDTH 100
-#define HEIGHT 100
+#include <cassert>
 
+// This header implements a simple bitmap object, with plotting and writing to a file.
+// It doesn't require any windows headers.
 struct Color
 {
     uint8_t red;
     uint8_t green;
     uint8_t blue;
 };
-Color bitmap[HEIGHT][WIDTH];
 
-static void ClearBitmap(const Color& color)
+struct Bitmap
 {
-    for (int y = 0; y < HEIGHT; y++)
+    int width;
+    int height;
+    Color* pData;
+};
+
+static Bitmap* CreateBitmap(int width, int height)
+{
+    Bitmap* pBitmap = (Bitmap*)malloc(sizeof(Bitmap));
+    pBitmap->width = width;
+    pBitmap->height = height;
+    pBitmap->pData = (Color*)malloc(sizeof(Color) * width * height);
+    return pBitmap;
+}
+
+static void DestroyBitmap(Bitmap* pBitmap)
+{
+    if (pBitmap)
     {
-        for (int x = 0; x < HEIGHT; x++)
+        free(pBitmap->pData);
+        free(pBitmap);
+    }
+}
+
+// Returns a dummy pixel for out of bounds
+static inline Color& GetPixel(Bitmap* pBitmap, int x, int y)
+{
+    if (x >= pBitmap->width ||
+        y >= pBitmap->height ||
+        x < 0 ||
+        y < 0)
+    {
+        assert(!"GetPixel out of bounds");
+        static Color empty;
+        return empty;
+    }
+
+    Color& col = pBitmap->pData[(pBitmap->width * y) + x];
+    return col;
+}
+
+// Ignores out of bounds pixels
+static inline void PutPixel(Bitmap* pBitmap, int x, int y, const Color& color)
+{
+    if (x >= pBitmap->width ||
+        y >= pBitmap->height || 
+        x < 0 ||
+        y < 0)
+    {
+        assert(!"PutPixel out of bounds");
+        return;
+    }
+    Color& col = pBitmap->pData[(pBitmap->width * y) + x];
+    col.red = color.red;
+    col.green = color.green;
+    col.blue = color.blue;
+}
+
+static void ClearBitmap(Bitmap* pBitmap, const Color& color)
+{
+    for (int y = 0; y < pBitmap->height; y++)
+    {
+        for (int x = 0; x < pBitmap->width; x++)
         {
-            bitmap[y][x] = color;
+            PutPixel(pBitmap, x, y, color);
         }
     }
 }
 
-static void PutPixel(int x, int y, const Color& color)
+static inline float ToRad(float angle)
 {
-    bitmap[y][x].red = color.red;
-    bitmap[y][x].green = color.green;
-    bitmap[y][x].blue = color.blue;
+    return angle * (3.14159f / 180.0f);
 }
 
-static void DrawLine(int x1, int y1, int x2, int y2, const Color& color)
+static void DrawCircle(Bitmap* pBitmap, int x, int y, int radius, const Color& col)
+{
+    float step = 360.0 / (2.0f * 3.14159f * (float)radius);
+    for (float angle = 0.f; angle < 360.0f; angle += step)
+    {
+        int xx = (int)(radius * sin(ToRad(angle)));
+        int yy = (int)(radius * cos(ToRad(angle)));
+        PutPixel(pBitmap, x + xx, y + yy, col);
+    }
+}
+
+static void DrawLine(Bitmap* pBitmap, int x1, int y1, int x2, int y2, const Color& color)
 {
     int x, y, dx, dy, dx1, dy1, px, py, xe, ye, i;
     dx = x2 - x1;
@@ -52,7 +120,7 @@ static void DrawLine(int x1, int y1, int x2, int y2, const Color& color)
             y = y2;
             xe = x1;
         }
-        PutPixel(x, y, color);
+        PutPixel(pBitmap, x, y, color);
         for (i = 0; x<xe; i++)
         {
             x = x + 1;
@@ -72,7 +140,7 @@ static void DrawLine(int x1, int y1, int x2, int y2, const Color& color)
                 }
                 px = px + 2 * (dy1 - dx1);
             }
-            PutPixel(x, y, color);
+            PutPixel(pBitmap, x, y, color);
         }
     }
     else
@@ -89,7 +157,7 @@ static void DrawLine(int x1, int y1, int x2, int y2, const Color& color)
             y = y2;
             ye = y1;
         }
-        PutPixel(x, y, color);
+        PutPixel(pBitmap, x, y, color);
         for (i = 0; y<ye; i++)
         {
             y = y + 1;
@@ -109,7 +177,7 @@ static void DrawLine(int x1, int y1, int x2, int y2, const Color& color)
                 }
                 py = py + 2 * (dx1 - dy1);
             }
-            PutPixel(x, y, color);
+            PutPixel(pBitmap, x, y, color);
         }
     }
 }
@@ -118,21 +186,21 @@ This rather hacky function to write a bitmap is taken from here.
 Just give it the size of your array and the RGB (24Bit)
 https://en.wikipedia.org/wiki/User:Evercat/Buddhabrot.c
 */
-static void WriteBitmap(char * filename)
+static void WriteBitmap(Bitmap* pBitmap, char * filename)
 {
-    unsigned int headers[13];
+    uint32_t headers[13];
     FILE * outfile;
     int extrabytes;
     int paddedsize;
     int x; int y; int n;
 
-    extrabytes = 4 - ((WIDTH * 3) % 4);                 // How many bytes of padding to add to each
+    extrabytes = 4 - ((pBitmap->width * 3) % 4);                 // How many bytes of padding to add to each
                                                         // horizontal line - the size of which must
                                                         // be a multiple of 4 bytes.
     if (extrabytes == 4)
         extrabytes = 0;
 
-    paddedsize = ((WIDTH * 3) + extrabytes) * HEIGHT;
+    paddedsize = ((pBitmap->width * 3) + extrabytes) * pBitmap->height;
 
     // Headers...
     // Note that the "BM" identifier in bytes 0 and 1 is NOT included in these "headers".
@@ -141,8 +209,8 @@ static void WriteBitmap(char * filename)
     headers[1] = 0;                    // bfReserved (both)
     headers[2] = 54;                   // bfOffbits
     headers[3] = 40;                   // biSize
-    headers[4] = WIDTH;  // biWidth
-    headers[5] = HEIGHT; // biHeight
+    headers[4] = pBitmap->width;  // biWidth
+    headers[5] = pBitmap->height; // biHeight
 
                          // Would have biPlanes and biBitCount in position 6, but they're shorts.
                          // It's easier to write them out separately (see below) than pretend
@@ -169,7 +237,7 @@ static void WriteBitmap(char * filename)
         fprintf(outfile, "%c", headers[n] & 0x000000FF);
         fprintf(outfile, "%c", (headers[n] & 0x0000FF00) >> 8);
         fprintf(outfile, "%c", (headers[n] & 0x00FF0000) >> 16);
-        fprintf(outfile, "%c", (headers[n] & (unsigned int)0xFF000000) >> 24);
+        fprintf(outfile, "%c", (headers[n] & (uint32_t)0xFF000000) >> 24);
     }
 
     // These next 4 characters are for the biPlanes and biBitCount fields.
@@ -184,22 +252,22 @@ static void WriteBitmap(char * filename)
         fprintf(outfile, "%c", headers[n] & 0x000000FF);
         fprintf(outfile, "%c", (headers[n] & 0x0000FF00) >> 8);
         fprintf(outfile, "%c", (headers[n] & 0x00FF0000) >> 16);
-        fprintf(outfile, "%c", (headers[n] & (unsigned int)0xFF000000) >> 24);
+        fprintf(outfile, "%c", (headers[n] & (uint32_t)0xFF000000) >> 24);
     }
 
     //
     // Headers done, now write the data...
     //
 
-    for (y = HEIGHT - 1; y >= 0; y--)     // BMP image format is written from bottom to top...
+    for (y = pBitmap->height - 1; y >= 0; y--)     // BMP image format is written from bottom to top...
     {
-        for (x = 0; x <= WIDTH - 1; x++)
+        for (x = 0; x <= pBitmap->width - 1; x++)
         {
             // Also, it's written in (b,g,r) format...
-
-            fprintf(outfile, "%c", bitmap[y][x].blue);
-            fprintf(outfile, "%c", bitmap[y][x].green);
-            fprintf(outfile, "%c", bitmap[y][x].red);
+            Color& col = GetPixel(pBitmap, x, y);
+            fprintf(outfile, "%c", col.blue);
+            fprintf(outfile, "%c", col.green);
+            fprintf(outfile, "%c", col.red);
         }
         if (extrabytes)      // See above - BMP lines must be of lengths divisible by 4.
         {
