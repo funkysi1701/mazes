@@ -1,6 +1,11 @@
 #pragma once
 
 #include <cassert>
+#include <cstdint>
+#include <malloc.h>
+#define _USE_MATH_DEFINES
+#include <math.h>
+#include <stdio.h>
 
 // This header implements a simple bitmap object, with plotting and writing to a file.
 // It doesn't require any windows headers.
@@ -81,19 +86,41 @@ static void ClearBitmap(Bitmap* pBitmap, const Color& color)
     }
 }
 
-static inline float ToRad(float angle)
+static inline double ToRad(double angle)
 {
-    return angle * (3.14159f / 180.0f);
+    return (angle * (M_PI / 180.0));
 }
 
 static void DrawCircle(Bitmap* pBitmap, int x, int y, int radius, const Color& col)
 {
-    float step = 360.0 / (2.0f * 3.14159f * (float)radius);
-    for (float angle = 0.f; angle < 360.0f; angle += step)
+    double step = (360.0 / (2.0 * M_PI * (double)radius));
+    for (double angle = 0.f; angle < 360.0; angle += step)
     {
         int xx = (int)(radius * sin(ToRad(angle)));
         int yy = (int)(radius * cos(ToRad(angle)));
         PutPixel(pBitmap, x + xx, y + yy, col);
+    }
+}
+
+static void DrawArc(Bitmap* pBitmap, int x, int y, int radius, double startAngle, double endAngle, const Color& col)
+{
+    double step = (360.0 / (2.0 * M_PI * (double)radius));
+    for (double angle = startAngle; angle < endAngle; angle += step)
+    {
+        int xx = (int)(radius * sin(ToRad(angle)));
+        int yy = (int)(radius * cos(ToRad(angle)));
+        PutPixel(pBitmap, x + xx, y + yy, col);
+    }
+}
+
+static void DrawBlock(Bitmap* pBitmap, int x, int y, int xx, int yy, const Color& col)
+{
+    for (int xPos = x; xPos < xx; xPos++)
+    {
+        for (int yPos = y; yPos < yy; yPos++)
+        {
+            PutPixel(pBitmap, xPos, yPos, col);
+        }
     }
 }
 
