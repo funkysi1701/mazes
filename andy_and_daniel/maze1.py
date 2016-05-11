@@ -1,51 +1,153 @@
 import random
 
 
+class Position(object):
+    def __init__(self, y, x):
+        self.y = y
+        self.x = x
+
+    def up(self):
+        return Position(self.y - 1, self.x)
+
+    def down(self):
+        return Position(self.y + 1, self.x)
+
+    def right(self):
+        return Position(self.y, self.x + 1)
+
+    def left(self):
+        return Position(self.y, self.x - 1)
+
+    def valid_neighbours(self, n):
+        neighbours = []
+        for neighbour in [self.up(), self.down(), self.left(), self.right()]:
+            if neighbour.is_valid(n):
+                neighbours.append(neighbour)
+        return neighbours
+
+    def is_valid(self, n):
+        # for a square n x n maze, return True if the position is
+        # valid.
+        return (0 <= self.x < n) and (0 <= self.y < n)
+
+    def __str__(self):
+        return '(x={}, y={})'.format(self.x, self.y)
+
+
 class Cell(object):
     def __init__(self, upper, side):
         self.upper = upper
         self.side = side
 
+        self.visited = False
+
+        self.distance = None
+
+
+class Maze(object):
+
+    def __init__(self, n, rows):
+        self.n = n
+        self.rows = rows
+
+    def __getitem__(self, position):
+        return self.rows[position.y][position.x]
+
+
+def remove_wall_between(maze, start, target):
+    # Give a maze, a starting cell and a target cell, remove the
+    # adjoining wall. If they are not neighbours, then error.
+
+    # They are either vertical neighbours, or horizontal neighbours
+
+    if abs(start.x - target.x) == 1:
+        # They are horizontal neighbours
+        right_position = sorted([start, target], key=lambda pos: pos.x)[1]
+        right_cell = maze[right_position]
+        # Remove that wall, and mark it as visited
+        right_cell.side = False
+    elif abs(start.y - target.y) == 1:
+        # They are vertical neighbours
+        bottom_position = sorted([start, target], key=lambda pos: pos.y)[1]
+        bottom_cell = maze[bottom_position]
+        # Remove that wall, and mark it as visited
+        bottom_cell.upper = False
+    else:
+        raise ValueError('{} and {} are no neighbours'.format(start, target))
+        
+        
+
 
 def list_of_cells(n):
     cells = []
     for i in range(n):
-        if i == 0:
-            # Then we're at the left edge of the maze
-            cell = Cell(upper=False, side=True)
-        else:
-            remove_upper = random.choice([True, False])
-            if remove_upper:
-                cell = Cell(upper=False, side=True)
-            else:
-                cell = Cell(upper=True, side=False)
+        cell = Cell(True, True)
         cells.append(cell)
     return cells
 
 
-def get_maze(n):
-    maze = []
-    for i in range(n):
-        if i == 0:
-            row = []
-            for _ in range(n):
-                row.append(Cell(upper=True, side=False))
-        else:
-            row = list_of_cells(n)
+def all_visited(maze):
+    for row in maze.rows:
+        for cell in row:
+            if not cell.visited:
+                return False
+    return True
 
-        maze.append(row)
+
+def get_maze(n):
+    rows = []
+    for i in range(n):
+        row = list_of_cells(n)
+        rows.append(row)
+    maze = Maze(n=n, rows=rows)
+
+    # Have walls everywhere
+
+    # TODO:
+    # Pick starting position
+    # Then loop until all visited:
+    #   Pick a direction
+    #   if target cell not visited, remove wall
+    #   move there
+
+    # position as (y, x)
+    position = Position(random.randint(0, n-1), random.randint(0, n-1))
+
+    while not all_visited(maze):
+
+        # mark the current position as visited
+        maze[position].visited = True
+
+        # Move in a random direction
+        legal_new_positions = position.valid_neighbours(n)
+        new_position = random.choice(legal_new_positions)
+
+        # if we haven't visited the new position, tear down this wall.
+
+        target_cell = maze[new_position]
+        if not target_cell.visited:
+            remove_wall_between(maze, position, new_position)
+
+        position = new_position
+
     return maze
+
 
 
 import pygame, sys
 from pygame.locals import *
 
 
-def draw_maze(maze):
-    # set up the window
-    surface = pygame.display.set_mode((500, 400), 0, 32)
-
+def draw_maze(maze, n):
     CELL_SIZE = 20
+
+    # set up the window
+
+    screen_size = (n*CELL_SIZE+1, n*CELL_SIZE+1)
+
+    surface = pygame.display.set_mode(screen_size, 0, 32)
+
+    
 
     BLACK = (0, 0, 0)
     WHITE = (255, 255, 255)
@@ -53,7 +155,7 @@ def draw_maze(maze):
     # draw the white background onto the surface
     surface.fill(WHITE)
 
-    for y_index, row in enumerate(maze):
+    for y_index, row in enumerate(maze.rows):
         for x_index, cell in enumerate(row):
             cell_top_left = (x_index * CELL_SIZE, y_index * CELL_SIZE)
             if cell.upper:
@@ -83,9 +185,9 @@ def draw_maze(maze):
 
 
 def main():
-    n = 10
+    n = 30
     maze = get_maze(n)
-    draw_maze(maze)
+    draw_maze(maze, n)
 
 
 if __name__ == '__main__':
