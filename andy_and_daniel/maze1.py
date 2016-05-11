@@ -1,6 +1,3 @@
-
-
-
 class Cell(object):
     def __init__(self, upper, side):
         self.upper = upper
@@ -49,9 +46,11 @@ def draw_maze(maze):
                 pygame.draw.line(
                     surface, BLACK, cell_top_left, end, 1)
 
-    # Draw some shapes with
-    
+    maze_top_left = (0, 0)
+    # Can just borrow the final values of y_index and x_index
+    maze_bottom_right = ((y_index + 1) * CELL_SIZE, (x_index + 1) * CELL_SIZE)
 
+    pygame.draw.rect(surface, BLACK, (maze_top_left, maze_bottom_right), 1)
     # draw the window onto the screen
     pygame.display.update()
 
