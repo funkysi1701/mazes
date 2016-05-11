@@ -32,9 +32,16 @@ void main(void* arg, void** args)
 
     DrawCircle(pBitmap, 400, 400, 80, col);
 
+    col.red = 0;
+    col.green = 0;
+    DrawArc(pBitmap, 400, 400, 90, 0, 45, col);
+
+    col.red = 128;
+    DrawBlock(pBitmap, 25, 25, 55, 55, col);
+
     WriteBitmap(pBitmap, "maze.bmp");
 
     DestroyBitmap(pBitmap);
 
-    system("pause");
+    system("start maze.bmp");
 }
