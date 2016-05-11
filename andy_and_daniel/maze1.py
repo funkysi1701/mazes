@@ -18,17 +18,8 @@ class Position(object):
     def left(self):
         return Position(self.y, self.x - 1)
 
-    def valid_neighbours(self, n):
-        neighbours = []
-        for neighbour in [self.up(), self.down(), self.left(), self.right()]:
-            if neighbour.is_valid(n):
-                neighbours.append(neighbour)
-        return neighbours
-
-    def is_valid(self, n):
-        # for a square n x n maze, return True if the position is
-        # valid.
-        return (0 <= self.x < n) and (0 <= self.y < n)
+    def neighbours(self):
+        return [self.up(), self.down(), self.left(), self.right()]
 
     def __str__(self):
         return '(x={}, y={})'.format(self.x, self.y)
@@ -53,6 +44,11 @@ class Maze(object):
     def __getitem__(self, position):
         return self.rows[position.y][position.x]
 
+    def is_valid(self, position):
+        return (0 <= position.x < self.n) and (0 <= position.y < self.n)
+
+    def valid_neighbours(self, position):
+        return [neighbour for neighbour in position.neighbours() if self.is_valid(neighbour)]
 
 def remove_wall_between(maze, start, target):
     # Give a maze, a starting cell and a target cell, remove the
@@ -119,7 +115,7 @@ def get_maze(n):
         maze[position].visited = True
 
         # Move in a random direction
-        legal_new_positions = position.valid_neighbours(n)
+        legal_new_positions = maze.valid_neighbours(position)
         new_position = random.choice(legal_new_positions)
 
         # if we haven't visited the new position, tear down this wall.
