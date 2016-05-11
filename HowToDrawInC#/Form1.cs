@@ -24,6 +24,7 @@ namespace Circle
             var color = Pens.Orange;
             g.DrawEllipse(color, new Rectangle(50, 50, 100, 100));
             g.DrawRectangle(color, new Rectangle(80, 80, 30, 30));
+            g.DrawString("Sample Text", SystemFonts.DefaultFont, Brushes.Black, new Point(195, 95));
 
             color = Pens.Blue;
             g.DrawArc(color, new Rectangle(300, 150, 80, 80), 90, 180);
