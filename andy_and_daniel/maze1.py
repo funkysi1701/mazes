@@ -1,3 +1,6 @@
+import random
+
+
 class Cell(object):
     def __init__(self, upper, side):
         self.upper = upper
@@ -6,15 +9,31 @@ class Cell(object):
 
 def list_of_cells(n):
     cells = []
-    for _ in range(n):
-        cells.append(Cell(True, True))
+    for i in range(n):
+        if i == 0:
+            # Then we're at the left edge of the maze
+            cell = Cell(upper=False, side=True)
+        else:
+            remove_upper = random.choice([True, False])
+            if remove_upper:
+                cell = Cell(upper=False, side=True)
+            else:
+                cell = Cell(upper=True, side=False)
+        cells.append(cell)
     return cells
 
 
 def get_maze(n):
     maze = []
-    for _ in range(n):
-        maze.append(list_of_cells(n))
+    for i in range(n):
+        if i == 0:
+            row = []
+            for _ in range(n):
+                row.append(Cell(upper=True, side=False))
+        else:
+            row = list_of_cells(n)
+
+        maze.append(row)
     return maze
 
 
