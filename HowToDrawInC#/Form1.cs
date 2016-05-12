@@ -2,6 +2,7 @@
 using System.Drawing;
 using System.Windows.Forms;
 
+
 namespace Circle
 {
     public partial class Form1 : Form
@@ -9,50 +10,41 @@ namespace Circle
         public Form1()
         {
             InitializeComponent();
+
+            maze = new bool[width,height];
+            Random rnd = new Random();
+            for (int y = 0; y < height; y++)
+            {
+                for (int x = 0; x < width; x++)
+                {
+                    maze[x, y] = (rnd.Next() % 2) == 0;
+                }
+            }
+
         }
-
-
+        private bool[,] maze;
+        private const int width = 50;
+        private const int height = 50;
         private void Form1_Paint(object sender, PaintEventArgs e)
         {
             var g = e.Graphics;
-            //1x1 grid
-            int[][] onebyone = new int[4][] ;
-            onebyone[0] = new int[4] { 0, 0, 0, 10 };
-            onebyone[1] = new int[4] { 0, 0, 10, 0 };
-            onebyone[2] = new int[4] { 10, 0, 10, 10 };
-            onebyone[3] = new int[4] { 0, 10, 10, 10 };
-            for (int i = 0; i < onebyone.Length; i++)
+            for (int y = 0; y < height; y++)
             {
-                DrawStraightLine(g, onebyone[i]);
+                for (int x = 0; x < width; x++)
+                {
+                    if (maze[x, y])
+                    {
+                        //horizontal
+                        if (x < width - 1)
+                            g.DrawLine(Pens.Green, x * 10 + 10, y * 10 + 10, x * 10 + 19, y * 10 + 10);
+                    }
+                    else
+                    {
+                        if(y<height-1)
+                            g.DrawLine(Pens.Green, x * 10 + 10, y * 10 + 10, x * 10 + 10, y * 10 + 19);
+                    }
+                }
             }
-            //2x2
-            int[][] twobytwo = new int[16][];
-            twobytwo[0] = new int[4] { 0, 0, 0, 10 };
-            twobytwo[1] = new int[4] { 0, 0, 10, 0 };
-            twobytwo[2] = new int[4] { 10, 0, 10, 10 };
-            twobytwo[3] = new int[4] { 0, 10, 10, 10 };
-
-            twobytwo[4] = new int[4] { 10, 0, 10, 10 };
-            twobytwo[5] = new int[4] { 10, 0, 20, 0 };
-            twobytwo[6] = new int[4] { 20, 0, 20, 10 };
-            twobytwo[7] = new int[4] { 10, 10, 20, 10 };
-
-            twobytwo[8] = new int[4] { 0, 10, 0, 20 };
-            twobytwo[9] = new int[4] { 0, 10, 10, 10 };
-            twobytwo[10] = new int[4] { 10, 10, 10, 20 };
-            twobytwo[11] = new int[4] { 0, 20, 10, 20 };
-
-            twobytwo[12] = new int[4] { 10, 10, 10, 20 };
-            twobytwo[13] = new int[4] { 10, 10, 20, 10 };
-            twobytwo[14] = new int[4] { 20, 10, 20, 20 };
-            twobytwo[15] = new int[4] { 10, 20, 20, 20 };
-            for (int i = 0; i < twobytwo.Length; i++)
-            {
-                DrawStraightLine(g, twobytwo[i]);
-            }
-            //3x3
-
-            //DrawCircleUsingLines(g);
         }
 
         /// <summary>

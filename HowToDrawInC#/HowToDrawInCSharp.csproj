@@ -46,6 +46,14 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="visual.cs" />
+    <Compile Include="visual.Designer.cs">
+      <DependentUpon>visual.cs</DependentUpon>
+    </Compile>
+    <Compile Include="randomwalk.cs" />
+    <Compile Include="randomwalk.Designer.cs">
+      <DependentUpon>randomwalk.cs</DependentUpon>
+    </Compile>
     <Compile Include="Form1.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -54,6 +62,12 @@
     </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <EmbeddedResource Include="visual.resx">
+      <DependentUpon>visual.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="randomwalk.resx">
+      <DependentUpon>randomwalk.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Form1.resx">
       <DependentUpon>Form1.cs</DependentUpon>
     </EmbeddedResource>
